@@ -23,6 +23,17 @@
         </span>
       </span>
     </el-tree>
+    <el-dialog title="提示" :visible.sync="dialogVisible" width="30%">
+      <el-form :model="category">
+        <el-form-item label="分类名称">
+          <el-input v-model="category.name" autocomplete="off"></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="dialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="addCategory">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -35,8 +46,10 @@ export default {
   // 定义属性
   data() {
     return {
+      dialogVisible: false,
       menus: [],
       expandedKey: [],
+      category: { name: "", parentCid: 0, catLevel: 0, showStatus: 1, sort: 0 },
       defaultProps: {
         children: "children",
         label: "name",
@@ -50,7 +63,32 @@ export default {
   watch: {},
   // 方法集合
   methods: {
-    append(data) {},
+    append(data) {
+       console.log("append----", data);
+      this.category.parentCid = data.catId;
+      this.category.catLevel = data.catLevel * 1 + 1;
+      this.dialogVisible = true;
+    },
+    // 添加三级分类
+    addCategory() {
+      console.log("提交的三级分类数据", this.category);
+      this.$http({
+        url: this.$http.adornUrl("/product/category/save"),
+        method: "post",
+        data: this.$http.adornData(this.category, false),
+      })
+        .then(({ data }) => {
+          this.$message({
+            type: "success",
+            message: "菜单保存成功!",
+          });
+          this.dialogVisible = false;
+          // 刷新出新的菜单
+          this.getMenus();
+          this.expandedKey = [this.category.parentCid];
+        })
+        .catch(() => {});
+    },
     remove(node, data) {
       console.log("remove---", node);
       console.log("data---", data);
