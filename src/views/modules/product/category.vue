@@ -55,8 +55,13 @@ export default {
       console.log("remove---", node);
       console.log("data---", data);
       var ids = [data.catId];
-
-       this.$http({
+  this.$confirm(`是否删除【${data.name}】当前菜单?`, "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      })
+        .then(() => {
+          this.$http({
             url: this.$http.adornUrl("/product/category/delete"),
             method: "post",
             data: this.$http.adornData(ids, false),
@@ -71,6 +76,13 @@ export default {
               this.expandedKey = [node.parent.data.catId]
             })
             .catch(() => {});
+        })
+        .catch(() => {
+          this.$message({
+            type: "info",
+            message: "已取消删除",
+          });
+        });
     },
     getMenus() {
       this.$http({
