@@ -1,10 +1,28 @@
 <template>
   <div>
-    <el-tree
-      :data="data"
-      :props="defaultProps"
-      @node-click="handleNodeClick"
-    ></el-tree>
+    <el-tree :data="menus" :props="defaultProps" :expand-on-click-node="false" show-checkbox node-key="catId" :default-expanded-keys="expandedKey">
+      <span class="custom-tree-node" slot-scope="{ node, data }">
+        <span>{{ node.label }}</span>
+        <span>
+          <el-button
+            v-if="node.level <= 2"
+            type="text"
+            size="mini"
+            @click="() => append(data)"
+          >
+            Append
+          </el-button>
+          <el-button
+            v-if="node.childNodes.length == 0"
+            type="text"
+            size="mini"
+            @click="() => remove(node, data)"
+          >
+            Delete
+          </el-button>
+        </span>
+      </span>
+    </el-tree>
   </div>
 </template>
 
@@ -17,66 +35,11 @@ export default {
   // 定义属性
   data() {
     return {
-      data: [
-        {
-          label: "一级 111",
-          children: [
-            {
-              label: "二级 1-1",
-              children: [
-                {
-                  label: "三级 1-1-1",
-                },
-              ],
-            },
-          ],
-        },
-        {
-          label: "一级 2",
-          children: [
-            {
-              label: "二级 2-1",
-              children: [
-                {
-                  label: "三级 2-1-1",
-                },
-              ],
-            },
-            {
-              label: "二级 2-2",
-              children: [
-                {
-                  label: "三级 2-2-1",
-                },
-              ],
-            },
-          ],
-        },
-        {
-          label: "一级 3",
-          children: [
-            {
-              label: "二级 3-1",
-              children: [
-                {
-                  label: "三级 3-1-1",
-                },
-              ],
-            },
-            {
-              label: "二级 3-2",
-              children: [
-                {
-                  label: "三级 3-2-1",
-                },
-              ],
-            },
-          ],
-        },
-      ],
+      menus: [],
+      expandedKey: [],
       defaultProps: {
         children: "children",
-        label: "label",
+        label: "name",
       },
     };
   },
@@ -87,12 +50,43 @@ export default {
   watch: {},
   // 方法集合
   methods: {
-    handleNodeClick(data) {
-      console.log(data);
+    append(data) {},
+    remove(node, data) {
+      console.log("remove---", node);
+      console.log("data---", data);
+      var ids = [data.catId];
+
+       this.$http({
+            url: this.$http.adornUrl("/product/category/delete"),
+            method: "post",
+            data: this.$http.adornData(ids, false),
+          })
+            .then(({ data }) => {
+              this.$message({
+                type: "success",
+                message: "菜单删除成功!",
+              });
+              // 刷新出新的菜单
+              this.getMenus();
+              this.expandedKey = [node.parent.data.catId]
+            })
+            .catch(() => {});
+    },
+    getMenus() {
+      this.$http({
+        url: this.$http.adornUrl("/product/category/list/tree"),
+        methods: "get",
+      })
+        .then(({ data }) => {
+          this.menus = data.data;
+        })
+        .catch(() => {});
     },
   },
   // 生命周期 - 创建完成（可以访问当前this实例）
-  created() {},
+  created() {
+    this.getMenus();
+  },
   // 生命周期 - 挂载完成（可以访问DOM元素）
   mounted() {},
   beforeCreate() {}, // 生命周期 - 创建之前
@@ -107,4 +101,5 @@ export default {
 
 // <style lang='scss' scoped>
 //@import url(); 引入公共 css 类
-// </style>
+//
+</style>
